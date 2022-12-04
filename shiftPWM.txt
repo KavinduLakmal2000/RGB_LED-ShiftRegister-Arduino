@@ -1,0 +1,70 @@
+/************************************************************************************************************************************
+Fade in LED's one by one using ShiftPWM with one shift register
+ ************************************************************************************************************************************/
+
+// You can choose the latch pin yourself.
+const int ShiftPWM_latchPin=8;
+
+#define SHIFTPWM_NOSPI
+const int ShiftPWM_dataPin = 11;
+const int ShiftPWM_clockPin = 12;
+
+
+// If your LED's turn on if the pin is low, set this to true, otherwise set it to false.
+const bool ShiftPWM_invertOutputs = false; 
+
+// You can enable the option below to shift the PWM phase of each shift register by 8 compared to the previous.
+// This will slightly increase the interrupt load, but will prevent all PWM signals from becoming high at the same time.
+// This will be a bit easier on your power supply, because the current peaks are distributed.
+const bool ShiftPWM_balanceLoad = false;
+
+#include <ShiftPWM.h>   // include ShiftPWM.h after setting the pins!
+
+// Here you set the number of brightness levels, the update frequency and the number of shift registers.
+// These values affect the load of ShiftPWM.
+// Choose them wisely and use the PrintInterruptLoad() function to verify your load.
+// There is a calculator on my website to estimate the load.
+
+unsigned char maxBrightness = 255;
+unsigned char pwmFrequency = 75;
+int numRegisters = 1;
+int numRGBleds = numRegisters*8/3;
+
+void setup(){
+
+  // Sets the number of 8-bit registers that are used.
+  ShiftPWM.SetAmountOfRegisters(numRegisters);
+
+  // SetPinGrouping allows flexibility in LED setup. 
+  // If your LED's are connected like this: RRRRGGGGBBBBRRRRGGGGBBBB, use SetPinGrouping(4).
+  //ShiftPWM.SetPinGrouping(3); //This is the default, but I added here to demonstrate how to use the funtion
+  
+  ShiftPWM.Start(pwmFrequency,maxBrightness);
+}
+
+
+void loop()
+{    
+  // Turn all LED's off.
+  ShiftPWM.SetAll(0);
+  
+  //ShiftPWM.SetOne(0, 255);
+  
+  // For every led
+  for(int pin = 0; pin < 8; pin++){
+    
+    // Fade in
+    for(unsigned char brightness = 0; brightness < 255; brightness++){
+      ShiftPWM.SetOne(pin, brightness);
+      delayMicroseconds(2000);
+    }
+    
+    // Fade out
+    for(unsigned char brightness = 255; brightness > 0; brightness--){
+      ShiftPWM.SetOne(pin, brightness);
+      delayMicroseconds(2000);
+    }
+        
+  }
+
+}
